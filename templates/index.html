@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Resultados de la Estrategia de Trading</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Roboto', sans-serif;
+        }
+        .navbar {
+            margin-bottom: 20px;
+        }
+        #logContainer {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #1c1e21;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+        }
+        .progress-bar {
+            transition: width 0.4s ease;
+        }
+        .card {
+            transition: transform 0.2s ease;
+        }
+        .card:hover {
+            transform: scale(1.05);
+        }
+        #resultsList {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        #chartsContainer .col {
+            margin-bottom: 20px;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Trading Strategy Results</a>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col text-center">
+                <button id="startButton" class="btn btn-success btn-lg">Iniciar Estrategia</button>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col">
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%;">0%</div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4">
+            <div class="col text-center">
+                <button id="showLogs" class="btn btn-primary mx-2">Mostrar Logs</button>
+                <button id="showResults" class="btn btn-primary mx-2">Mostrar Símbolos</button>
+                <button id="showCharts" class="btn btn-primary mx-2">Mostrar Gráficos</button>
+            </div>
+        </div>
+        <div id="logsSection" class="content-section active">
+            <h4 class="mb-3">Log de Eventos</h4>
+            <div id="logContainer" class="shadow-sm"></div>
+        </div>
+        <div id="resultsSection" class="content-section">
+            <h4 class="mb-3">Símbolos Filtrados</h4>
+            <ul id="resultsList" class="list-group shadow-sm"></ul>
+        </div>
+        <div id="chartsSection" class="content-section">
+            <h4 class="mb-3">Gráficos Generados</h4>
+            <div id="chartsContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var socket = io();
+            var logContainer = document.getElementById('logContainer');
+            var progressBar = document.getElementById('progressBar');
+            var resultsList = document.getElementById('resultsList');
+            var chartsContainer = document.getElementById('chartsContainer');
+            var logsSection = document.getElementById('logsSection');
+            var resultsSection = document.getElementById('resultsSection');
+            var chartsSection = document.getElementById('chartsSection');
+
+            socket.on('log', function(msg) {
+                var logEntry = document.createElement('div');
+                logEntry.textContent = msg.data;
+                logEntry.className = 'alert alert-secondary';
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            });
+
+            socket.on('progress', function(msg) {
+                var progress = msg.progress;
+                progressBar.style.width = progress + '%';
+                progressBar.innerText = Math.round(progress) + '%';
+            });
+
+            socket.on('results', function(msg) {
+                var symbols = msg.symbols;
+                resultsList.innerHTML = '';  // Limpiar la lista anterior
+                chartsContainer.innerHTML = '';  // Limpiar los gráficos anteriores
+                symbols.forEach(function(symbol) {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = symbol;
+                    listItem.className = 'list-group-item';
+                    resultsList.appendChild(listItem);
+
+                    // Crear una tarjeta para cada símbolo
+                    var colDiv = document.createElement('div');
+                    colDiv.className = 'col';
+                    
+                    var cardDiv = document.createElement('div');
+                    cardDiv.className = 'card shadow-sm h-100';
+                    
+                    var img = document.createElement('img');
+                    img.src = '/static/charts/' + symbol + '.png';
+                    img.className = 'card-img-top';
+                    img.alt = 'Gráfico de velas de ' + symbol;
+
+                    var cardBody = document.createElement('div');
+                    cardBody.className = 'card-body text-center';
+
+                    var cardTitle = document.createElement('h5');
+                    cardTitle.className = 'card-title';
+                    cardTitle.textContent = symbol;
+
+                    cardBody.appendChild(cardTitle);
+                    cardDiv.appendChild(img);
+                    cardDiv.appendChild(cardBody);
+                    colDiv.appendChild(cardDiv);
+                    chartsContainer.appendChild(colDiv);
+                });
+            });
+
+            document.getElementById('startButton').addEventListener('click', function() {
+                fetch('/start', { method: 'POST' });
+            });
+
+            document.getElementById('showLogs').addEventListener('click', function() {
+                logsSection.classList.add('active');
+                resultsSection.classList.remove('active');
+                chartsSection.classList.remove('active');
+            });
+
+            document.getElementById('showResults').addEventListener('click', function() {
+                logsSection.classList.remove('active');
+                resultsSection.classList.add('active');
+                chartsSection.classList.remove('active');
+            });
+
+            document.getElementById('showCharts').addEventListener('click', function() {
+                logsSection.classList.remove('active');
+                resultsSection.classList.remove('active');
+                chartsSection.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

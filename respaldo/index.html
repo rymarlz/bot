@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultados de la Estrategia de Trading</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var socket = io();
+            var logContainer = document.getElementById('logContainer');
+            var progressBar = document.getElementById('progressBar');
+            var resultsList = document.getElementById('resultsList');
+            var chartsContainer = document.getElementById('chartsContainer');
+
+            socket.on('log', function(msg) {
+                var logEntry = document.createElement('div');
+                logEntry.textContent = msg.data;
+                logEntry.className = 'alert alert-info';
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            });
+
+            socket.on('progress', function(msg) {
+                var progress = msg.progress;
+                progressBar.style.width = progress + '%';
+                progressBar.innerText = Math.round(progress) + '%';
+            });
+
+            socket.on('results', function(msg) {
+                var symbols = msg.symbols;
+                symbols.forEach(function(symbol) {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = symbol;
+                    listItem.className = 'list-group-item';
+                    resultsList.appendChild(listItem);
+
+                    // Crear una imagen para cada símbolo
+                    var colDiv = document.createElement('div');
+                    colDiv.className = 'col-lg-4 col-md-6 col-sm-12 mb-4';
+                    
+                    var cardDiv = document.createElement('div');
+                    cardDiv.className = 'card shadow-sm';
+                    
+                    var img = document.createElement('img');
+                    img.src = '/static/charts/' + symbol + '.png';
+                    img.className = 'card-img-top';
+                    img.alt = 'Gráfico de velas de ' + symbol;
+
+                    var cardBody = document.createElement('div');
+                    cardBody.className = 'card-body';
+
+                    var cardTitle = document.createElement('h5');
+                    cardTitle.textContent = symbol;
+
+                    cardBody.appendChild(cardTitle);
+                    cardDiv.appendChild(img);
+                    cardDiv.appendChild(cardBody);
+                    colDiv.appendChild(cardDiv);
+                    chartsContainer.appendChild(colDiv);
+                });
+            });
+
+            document.getElementById('startButton').addEventListener('click', function() {
+                fetch('/start', { method: 'POST' });
+            });
+        });
+    </script>
+    <style>
+        #logContainer {
+            height: 400px;
+            overflow-y: scroll;
+            background-color: #343a40;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .alert-info {
+            background-color: transparent;
+            border: none;
+            color: white;
+        }
+        .progress {
+            height: 30px;
+        }
+        .progress-bar {
+            line-height: 30px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1 class="text-center mb-5">Resultados de la Estrategia de Trading</h1>
+        <div class="d-flex justify-content-center mb-4">
+            <button id="startButton" class="btn btn-primary btn-lg mx-2">Iniciar Estrategia</button>
+        </div>
+        <div class="progress mb-4">
+            <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;">0%</div>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <h2>Log:</h2>
+                <div id="logContainer"></div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <h2>Símbolos con Configuración de Reversión de Tendencia:</h2>
+                <ul id="resultsList" class="list-group"></ul>
+            </div>
+        </div>
+        <h2>Gráficos Generados:</h2>
+        <div id="chartsContainer" class="row mt-3"></div>
+    </div>
+</body>
+</html>

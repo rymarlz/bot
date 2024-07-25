@@ -1,0 +1,37 @@
+# Ignorar el entorno virtual
+venv/
+
+# Ignorar archivos de configuración del editor
+.vscode/
+
+# Ignorar archivos de caché y compilación de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignorar archivos de configuraciones de entorno
+.env
+
+# Ignorar archivos de bases de datos locales
+*.sqlite3
+
+# Ignorar archivos de logs
+*.log
+
+# Ignorar archivos temporales
+*.tmp
+
+# Ignorar archivos binarios
+*.whl
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Ignorar archivos de Excel generados
+*.xlsx
+
+# Ignorar directorios de gráficos generados
+charts/
+candlestick_charts/
+heikin_ashi_charts/
